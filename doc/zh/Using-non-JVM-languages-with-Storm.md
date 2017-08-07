@@ -3,14 +3,20 @@ title: Using non JVM languages with Storm
 layout: documentation
 ---
 使用没有jvm的语言编辑storm
+
 两个部分：创建topologies 以及 使用其他语言来实现 spouts 和bolts
+
 用另一种语言创建topologies 是比较容易的，因为topologies 用的是thrift 的结构（链接到storm.thrift）
+
 用另一种语言实现 spouts 和 bolts 被称为“multilang components ”或“shelling ”
+
 以下是协议的规范：Multilang协议
 thrift 结构允许你将多个组件明确定义为程序和脚本（例如，使用python编写你的bolt 的文件）
 在Java中，您可以通过重写ShellBolt或ShellSpout来创建multilang组件
+
 请注意，输出字段声明发生在thrift 结构中，所以在java中创建multilang 组件需要按照以下方式 ：
 在java中声明字段，通过在shellbolt的构造函数中指定它来处理另一种语言的代码
+
 multilang使用stdin / stdout上的json消息与子进程进行通信
 storm 带有Ruby、Python和实现协议的奇特适配器。下面展示一个python的示例
 
@@ -43,6 +49,6 @@ python topology.py arg1 arg2 {nimbus-host} {nimbus-port} {uploaded-jar-location}
 
 之后你可以使用Thrift API连接到Nimbus，并提交topology ，将{uploaded-jar-location}传递到submitTopology方法。为了方便参考我在下面展示了submitTopology类的定义。 ：
 
-void submitTopology（1：string name，2：string uploadedJarLocation，3：string jsonConf，4：StormTopology拓扑）
-    throws（1：AlreadyAliveException e，2：InvalidTopologyException ite）;
+void submitTopology(1: string name, 2: string uploadedJarLocation, 3: string jsonConf, 4: StormTopology topology)
+    throws (1: AlreadyAliveException e, 2: InvalidTopologyException ite);
 
