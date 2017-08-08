@@ -82,7 +82,6 @@ topology 需要一个额外的处理层来聚合来自上游螺栓的部分计�
 
 当你的bolt接收到任何给定请求的所有元组时，`CoordinatedBolt`封装了包含你的逻辑以及算法的bolt 。 它大量使用direct streams 来做到这一点。
 
-See [Distributed RPC](Distributed-RPC.html) for more details.
 `CoordinatedBolt`也封装了包含逻辑的bolt ，并确保您的topology 同时处理多个DRPC调用，而不是一次一次连续的执行。
 
 有关详细信息，请参阅[分布式 RPC](Distributed-RPC.html)。
