@@ -112,6 +112,7 @@ See [Concepts](Concepts.html) for more info on stream groupings. Here's an examp
 ```
 
 Since the option map is omitted, this is a non-prepared bolt. The DSL simply expects an implementation for the `execute` method of `IRichBolt`. The implementation takes two parameters, the tuple and the `OutputCollector`, and is followed by the body of the `execute` function. The DSL automatically type-hints the parameters for you so you don't need to worry about reflection if you use Java interop.
+(由于感觉有不准确的地方，先留着方便优化。)
 由于省略了option map(选项映射)，这是一个non-prepared bolt。 DSL只是期望执行一个IRichBolt的`execute`方法。该实现需要两个参数，即tuple(元组)和`OutputCollector`，后面是`execute`函数的正文。 DSL会为你自动提示参数，所以如果您使用Java交互，不需要担心反射问题。
 
 
@@ -135,8 +136,7 @@ This implementation binds `split-sentence` to an actual `IRichBolt` object that 
   )
 ```
 
-Unlike the previous example, `suffix-appender` will be bound to a function that returns an `IRichBolt` rather than be an `IRichBolt` object directly. This is caused by specifying `:params` in its option map. So to use `suffix-appender` in a topology, you would do something like:
-
+与前面的示例不同，`suffix-appender`将绑定到一个返回`IRichBolt`而不是直接作为`IRichBolt`对象的函数。这是通过在其option map(选项映射)中指定`:params`引起的。因此，在topology中使用`suffix-appender`，您可以执行以下操作：
 
 ```clojure
 (bolt-spec {"1" :shuffle}
@@ -144,9 +144,10 @@ Unlike the previous example, `suffix-appender` will be bound to a function that 
            :p 10)
 ```
 
-#### Prepared bolts
+#### Prepared bolts (准备 bolts)
 
-To do more complex bolts, such as ones that do joins and streaming aggregations, the bolt needs to store state. You can do this by creating a prepared bolt which is specified by including `{:prepare true}` in the option map. Consider, for example, this bolt that implements word counting:
+
+要做更复杂的bolts，如加入和流聚合的bolt，bolt需要存储状态。您可以通过在option map(选项映射)中创建一个通过包含`{:prepare true}`指定的prepared bolt 来实现此目的。例如，思考下这个实现单词计数的bolt：
 
 ```clojure
 (defbolt word-count ["word" "count"] {:prepare true}
@@ -161,17 +162,17 @@ To do more complex bolts, such as ones that do joins and streaming aggregations,
          )))))
 ```
 
-The implementation for a prepared bolt is a function that takes as input the topology config, `TopologyContext`, and `OutputCollector`, and returns an implementation of the `IBolt` interface. This design allows you to have a closure around the implementation of `execute` and `cleanup`. 
+prepared bolt的实现是通过一个函数 ，它将topology的配置“TopologyContext”和“OutputCollector”作为输入，并返回“IBolt”接口的一个实现。此设计允许您围绕`execute`和`cleanup`的实现时进行闭包。
 
-In this example, the word counts are stored in the closure in a map called `counts`. The `bolt` macro is used to create the `IBolt` implementation. The `bolt` macro is a more concise way to implement the interface than reifying, and it automatically type-hints all of the method parameters. This bolt implements the execute method which updates the count in the map and emits the new word count.
+在这个例子中，单词计数存储在一个名为`counts`的映射的闭包中。 `bolt`宏用于创建`IBolt`实现。 `bolt`宏是一种比简化实现界面更简洁的方法，它会自动提示所有的方法参数。该bolt实现了更新映射中的计数并发出新的单词计数的执行方法。
 
-Note that the `execute` method in prepared bolts only takes as input the tuple since the `OutputCollector` is already in the closure of the function (for simple bolts the collector is a second parameter to the `execute` function).
+请注意， prepared bolts 中的`execute`方法只能作为元组的输入，因为`OutputCollector`已经在函数的闭包中（对于简单的bolts，collector是`execute`函数的第二个参数）。
 
-Prepared bolts can be parameterized just like simple bolts.
+Prepared bolts 可以像 simple bolts 一样进行参数化。
 
-#### Output declarations
+#### Output declarations (输出声明)
 
-The Clojure DSL has a concise syntax for declaring the outputs of a bolt. The most general way to declare the outputs is as a map from stream id a stream spec. For example:
+Clojure DSL具有用于bolt输出的简明语法。声明输出的最通用的方法就是从stream id到stream spec的映射。例如：
 
 ```clojure
 {"1" ["field1" "field2"]
@@ -179,18 +180,20 @@ The Clojure DSL has a concise syntax for declaring the outputs of a bolt. The mo
  "3" ["f1"]}
 ```
 
-The stream id is a string, while the stream spec is either a vector of fields or a vector of fields wrapped by `direct-stream`. `direct stream` marks the stream as a direct stream (See [Concepts](Concepts.html) and [Direct groupings]() for more details on direct streams).
+stream id 是一个字符串，而stream spec(流规范)是个字段的向量或由`direct-stream`包装的字段的向量。 `direct stream`将流标记为direct stream（有关直接流的更多详细信息，请参阅[Concepts](Concepts.html) 和[Direct groupings](空的。。)）。
 
-If the bolt only has one output stream, you can define the default stream of the bolt by using a vector instead of a map for the output declaration. For example:
+
+如果bolt只有一个输出流，您可以使用向量而不用输出声明的映射来定义bolt的默认流。例如：
 
 ```clojure
 ["word" "count"]
 ```
 This declares the output of the bolt as the fields ["word" "count"] on the default stream id.
-
-#### Emitting, acking, and failing
+这段bolt输出的声明 为默认 stream id 上的字段[“word” “count”]。
+#### Emitting, acking, and failing  (发射，确认和失败)
 
 Rather than use the Java methods on `OutputCollector` directly, the DSL provides a nicer set of functions for using `OutputCollector`: `emit-bolt!`, `emit-direct-bolt!`, `ack!`, and `fail!`.
+DSL可以使用`OutputCollector`：`emit-bolt！`，`emit-direct-bolt！`，`ack！`和`fail ！`，而不是直接在`OutputCollector`上使用Java方法.
 
 1. `emit-bolt!`: takes as parameters the `OutputCollector`, the values to emit (a Clojure sequence), and keyword arguments for `:anchor` and `:stream`. `:anchor` can be a single tuple or a list of tuples, and `:stream` is the id of the stream to emit to. Omitting the keyword arguments emits an unanchored tuple to the default stream.
 2. `emit-direct-bolt!`: takes as parameters the `OutputCollector`, the task id to send the tuple to, the values to emit, and keyword arguments for `:anchor` and `:stream`. This function can only emit to streams declared as direct streams.
