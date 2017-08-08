@@ -4,7 +4,7 @@ layout: documentation
 documentation: true
 ---
 
-这一页列出了风暴拓扑中的各种常见模式。
+这一页列出了Strom topologies（拓扑）中的各种常见模式。
 
 1. Batching
 2. BasicBolt
@@ -29,7 +29,6 @@ documentation: true
 ### In-memory caching + fields grouping combo(在内存中缓存+字段分组组合)
 
 在Storm bolts 中使用内存缓存很常见。当把它与fields grouping 相结合时，缓存会变得特别强大。例如，假设你有一个bolt ，用于把短网址（如bit.ly，t.co，等）扩展为长的网址。你可以通过保存短URL的LRU，来缓存长URL的扩展 避免做同样的HTTP请求 从而提高性能。假设组件“URLS”发出短URLS，组件“expand ”将短URL扩展为长URL并在内部保留缓存。考虑下面两段代码之间的区别：
-
 
 ```java
 builder.setBolt("expand", new ExpandUrl(), parallelism)
