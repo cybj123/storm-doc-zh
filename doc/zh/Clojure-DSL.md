@@ -188,31 +188,30 @@ stream id 是一个字符串，而stream spec(流规范)是个字段的向量或
 ```clojure
 ["word" "count"]
 ```
-This declares the output of the bolt as the fields ["word" "count"] on the default stream id.
+
 这段bolt输出的声明 为默认 stream id 上的字段[“word” “count”]。
 #### Emitting, acking, and failing  (发射，确认和失败)
 
-Rather than use the Java methods on `OutputCollector` directly, the DSL provides a nicer set of functions for using `OutputCollector`: `emit-bolt!`, `emit-direct-bolt!`, `ack!`, and `fail!`.
-DSL可以使用`OutputCollector`：`emit-bolt！`，`emit-direct-bolt！`，`ack！`和`fail ！`，而不是直接在`OutputCollector`上使用Java方法.
 
-1. `emit-bolt!`: takes as parameters the `OutputCollector`, the values to emit (a Clojure sequence), and keyword arguments for `:anchor` and `:stream`. `:anchor` can be a single tuple or a list of tuples, and `:stream` is the id of the stream to emit to. Omitting the keyword arguments emits an unanchored tuple to the default stream.
-2. `emit-direct-bolt!`: takes as parameters the `OutputCollector`, the task id to send the tuple to, the values to emit, and keyword arguments for `:anchor` and `:stream`. This function can only emit to streams declared as direct streams.
-2. `ack!`: takes as parameters the `OutputCollector` and the tuple to ack.
-3. `fail!`: takes as parameters the `OutputCollector` and the tuple to fail.
+DSL可以使用`OutputCollector`：`emit-bolt！`，`emit-direct-bolt！`，`ack！`和`fail ！`，而不用直接在`OutputCollector`上使用Java方法.
 
-See [Guaranteeing message processing](Guaranteeing-message-processing.html) for more info on acking and anchoring.
+1. `emit-bolt！`：将“OutputCollector”，发出的值（一个Clojure sequence）和`：anchor`以及`：stream`的关键字参数作为参数。 `：anchor`可以是个single tuple或一个list of tuples，`：stream`是要发送到的流的id。 若省略关键字参数则默认流会发出一个unanchored tuple。
+2. `emit-direct-bolt！`：将`OutputCollector`作为参数，发送元组的任务id，发送的值，以及把`：anchor`和`：stream`的关键字参数作为参数。 此函数只能发出声明为direct streams的流。
+3. `ack!`: 将“OutputCollector”作为元组确认参数。
+4. `fail!`: 将“OutputCollector”作为元组失败参数
 
+有关确认和锚定的更多信息，请参阅[保证消息处理](Guaranteeing-message-processing.html)。
 ### defspout
 
-`defspout` is used for defining spouts in Clojure. Like bolts, spouts must be serializable so you can't just reify `IRichSpout` to do spout implementations in Clojure. `defspout` works around this restriction and provides a nicer syntax for defining spouts than just implementing a Java interface.
+`defspout`用于定义Clojure中的喷口。像螺栓一样，喷口必须是可序列化的，所以您不能只是在“Clojure”中引用“IRichSpout”来执行喷口实现。 `defspout`围绕这个限制，为定义spouts提供了一个更好的语法，而不仅仅是实现一个Java接口。
 
-The signature for `defspout` looks like the following:
+`defspout`的签名如下：
 
 (defspout _name_ _output-declaration_ *_option-map_ & _impl_)
 
-If you leave out the option map, it defaults to {:prepare true}. The output declaration for `defspout` has the same syntax as `defbolt`.
+如果你省略选项映射，则默认为{：prepare true}。 `defspout`的输出声明与`defbolt`语法相同。
 
-Here's an example `defspout` implementation from [storm-starter]({{page.git-blob-base}}/examples/storm-starter/src/clj/org/apache/storm/starter/clj/word_count.clj):
+这里有个实现`defspout`的一个例子[storm-starter]({{page.git-blob-base}}/examples/storm-starter/src/clj/org/apache/storm/starter/clj/word_count.clj):
 
 ```clojure
 (defspout sentence-spout ["sentence"]
@@ -233,15 +232,15 @@ Here's an example `defspout` implementation from [storm-starter]({{page.git-blob
         ))))
 ```
 
-The implementation takes in as input the topology config, `TopologyContext`, and `SpoutOutputCollector`. The implementation returns an `ISpout` object. Here, the `nextTuple` function emits a random sentence from `sentences`. 
+该实现将topology配置的“TopologyContext”和“SpoutOutputCollector”作为输入。该实现返回一个`ISpout`对象。这里，`nextTuple`函数从`sentence`发出一个随机语句。
 
-This spout isn't reliable, so the `ack` and `fail` methods will never be called. A reliable spout will add a message id when emitting tuples, and then `ack` or `fail` will be called when the tuple is completed or failed respectively. See [Guaranteeing message processing](Guaranteeing-message-processing.html) for more info on how reliability works within Storm.
+这个spout不是可靠的，所以`ack`和`fail`方法永远不会被调用。一个可靠的端口将在发出元组时添加一条消息ID，然后当元组完成或失败时，将会调用`ack`或`fail`。有关Storm中可靠性如何工作的更多信息，请参阅[保证消息处理](Guaranteeing-message-processing.html)。
 
-`emit-spout!` takes in as parameters the `SpoutOutputCollector` and the new tuple to be emitted, and accepts as keyword arguments `:stream` and `:id`. `:stream` specifies the stream to emit to, and `:id` specifies a message id for the tuple (used in the `ack` and `fail` callbacks). Omitting these arguments emits an unanchored tuple to the default output stream.
+`emit-spout！`将“SpoutOutputCollector”和新元组的参数作为参数发送，并接受作为关键字参数`：stream`和`：id`。 `：stream`为指定要发送的流，`：id`为指定元组的消息ID（在`ack'`和`fail`回调中使用）。省略这些参数会为默认输出流发出一个unanchored tuple。
 
-There is also a `emit-direct-spout!` function that emits a tuple to a direct stream and takes an additional argument as the second parameter of the task id to send the tuple to.
+这还有一个`emit-direct-spout !`函数，他会发出一个direct stream的元组，并附加一个任务id作为的第二个参数来发送这个元组。
 
-Spouts can be parameterized just like bolts, in which case the symbol is bound to a function returning `IRichSpout` instead of the `IRichSpout` itself. You can also declare an unprepared spout which only defines the `nextTuple` method. Here is an example of an unprepared spout that emits random sentences parameterized at runtime:
+Spouts可以像bolts一样进行参数化，在这种情况下，symbol绑定到返回“IRichSpout”的函数而不是“IRichSpout”本身。您还可以声明一个unprepared spout，它只定义`nextTuple`方法。以下是在运行时发出随机语句参数化的unprepared spout示例：
 
 ```clojure
 (defspout sentence-spout-parameterized ["word"] {:params [sentences] :prepare false}
@@ -250,8 +249,7 @@ Spouts can be parameterized just like bolts, in which case the symbol is bound t
   (emit-spout! collector [(rand-nth sentences)]))
 ```
 
-The following example illustrates how to use this spout in a `spout-spec`:
-
+以下示例说明了如何在`spout-spec`中使用此spout：
 ```clojure
 (spout-spec (sentence-spout-parameterized
                    ["the cat jumped over the door"
@@ -259,17 +257,17 @@ The following example illustrates how to use this spout in a `spout-spec`:
             :p 2)
 ```
 
-### Running topologies in local mode or on a cluster
+### Running topologies in local mode or on a cluster (在本地模式或集群上运行topologies)
 
-That's all there is to the Clojure DSL. To submit topologies in remote mode or local mode, just use the `StormSubmitter` or `LocalCluster` classes just like you would from Java.
+要想使用远程模式或本地模式提交topologies，只需像Java一样使用“StormSubmitter”或“LocalCluster”类。这就是Clojure DSL。
 
-To create topology configs, it's easiest to use the `org.apache.storm.config` namespace which defines constants for all of the possible configs. The constants are the same as the static constants in the `Config` class, except with dashes instead of underscores. For example, here's a topology config that sets the number of workers to 15 and configures the topology in debug mode:
+要创建topology配置，最简单的方法是使用org.apache.storm.config命名空间来定义所有可能配置的常量。常量与“Config”类中的静态常量相同，但是使用的是破折号而不是下划线。例如，这有一个topology配置，将workers数设置为15，并以调试模式配置topology：
 
 ```clojure
 {TOPOLOGY-DEBUG true
  TOPOLOGY-WORKERS 15}
 ```
 
-### Testing topologies
+### Testing topologies （测试topologies）
 
-[This blog post](http://www.pixelmachine.org/2011/12/17/Testing-Storm-Topologies.html) and its [follow-up](http://www.pixelmachine.org/2011/12/21/Testing-Storm-Topologies-Part-2.html) give a good overview of Storm's powerful built-in facilities for testing topologies in Clojure.
+关于测试Clojure中的topologies ，[博文](http://www.pixelmachine.org/2011/12/17/Testing-Storm-Topologies.html)及其[后续](http://www.pixelmachine.org/2011/ 12/21 / Testing-Storm-Topology-Part-2.html) 很好地概述了Storm的强大内置功能。
