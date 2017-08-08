@@ -23,13 +23,11 @@ documentation: true
 如果bolt 发出元组，那么您可能会想使用多锚来确保可靠性。这要看具体的应用程序而定。有关可靠性如何工作的详细信息，请参见[保证消息处理](Guaranteeing-message-processing.html)。
 
 ### BasicBolt
-Many bolts follow a similar pattern of reading an input tuple, emitting zero or more tuples based on that input tuple, and then acking that input tuple immediately at the end of the execute method. Bolts that match this pattern are things like functions and filters. This is such a common pattern that Storm exposes an interface called [IBasicBolt](javadocs/org/apache/storm/topology/IBasicBolt.html) that automates this pattern for you. See [Guaranteeing message processing](Guaranteeing-message-processing.html) for more information.
 
 许多bolts 遵循类似的阅读输入元组模式，基于输入元组发射零个或多个元组，然后在执行方法结束时会立即确认输入元组。与此模式匹配的Bolts 类似功能和过滤器。这是一个通用模式，storm会为你暴露一个称为[IBasicBolt](javadocs/org/apache/storm/topology/IBasicBolt.html) 接口 ，自动化模式。更多信息见[保证消息处理](Guaranteeing-message-processing.html)。
 
 ### In-memory caching + fields grouping combo(在内存中缓存+字段分组组合)
 
-It's common to keep caches in-memory in Storm bolts. Caching becomes particularly powerful when you combine it with a fields grouping. For example, suppose you have a bolt that expands short URLs (like bit.ly, t.co, etc.) into long URLs. You can increase performance by keeping an LRU cache of short URL to long URL expansions to avoid doing the same HTTP requests over and over. Suppose component "urls" emits short URLS, and component "expand" expands short URLs into long URLs and keeps a cache internally. Consider the difference between the two following snippets of code:
 在Storm bolts 中使用内存缓存很常见。当把它与fields grouping 相结合时，缓存会变得特别强大。例如，假设你有一个bolt ，用于把短网址（如bit.ly，t.co，等）扩展为长的网址。你可以通过保存短URL的LRU，来缓存长URL的扩展 避免做同样的HTTP请求 从而提高性能。假设组件“URLS”发出短URLS，组件“expand ”将短URL扩展为长URL并在内部保留缓存。考虑下面两段代码之间的区别：
 
 
@@ -49,7 +47,6 @@ builder.setBolt("expand", new ExpandUrl(), parallelism)
 
 一个常见的连续计算Storm 是通过“streaming top N ”的某种排序来实现。假设有一个bolt ，它会发射这种形式的元组["value", "count"] ，并且您希望有一个基于顶部N元组的bolt来计数 。要做到这一点，最简单的方法是有一个在流上执行全局组的bolt，并在内存中保存一个top N items列表。
 
-This approach obviously doesn't scale to large streams since the entire stream has to go through one task. A better way to do the computation is to do many top N's in parallel across partitions of the stream, and then merge those top N's together to get the global top N. The pattern looks like this:
 显然，这种方法不能在较大的流中应用，因为整个流必须完成一个任务。一个更好的计算方法是在流的分区上并行地执行上面的多个N‘s，然后合并上面的N‘s 个来得到全局的顶部N：
 
 ```java
@@ -61,7 +58,6 @@ builder.setBolt("merge", new MergeObjects())
 
 这种模式之所以有效，是因为第一个bolt 所做的字段分组，使您在语义上需要正确的区分。你可以在storm-starter[这里]({{page.git-blob-base}}/examples/storm-starter/src/jvm/org/apache/storm/starter/RollingTopWords.java) 中 看到这个案例。
 
-If however you have a known skew in the data being processed it can be advantageous to use partialKeyGrouping instead of fieldsGrouping.  This will distribute the load for each key between two downstream bolts instead of a single one.
 然而如果你想处理已知的数据倾斜问题，可以使用partialkeygrouping代替fieldsgrouping 。他将分配两个downstream bolts 来分布式负载以替代个使用单独的一个。
 
 ```java
@@ -77,7 +73,7 @@ topology 需要一个额外的处理层来聚合来自上游螺栓的部分计�
 
 ### TimeCacheMap for efficiently keeping a cache of things that have been recently updated （最近刚刚更新的 TimeCacheMap ，可以有效的存储缓存数据）
 
-You sometimes want to keep a cache in memory of items that have been recently "active" and have items that have been inactive for some time be automatically expires. [TimeCacheMap](javadocs/org/apache/storm/utils/TimeCacheMap.html) is an efficient data structure for doing this and provides hooks so you can insert callbacks whenever an item is expired.
+
 有时你想在最近活动的项目中保留一个缓存，并且让那些已经有一段时间没用的的条目自动过期。timecachemap就是比较试用这个场景的数据结构，他提供了一种方式，可以在当你需要让条目过期时添加回调函数。
 
 ### CoordinatedBolt and KeyedFairBolt for Distributed RPC（分布式RPC coordinatedbolt和keyedfairbolt）
